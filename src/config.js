@@ -10,6 +10,7 @@ const REQUIRED_ENV = [
 ];
 
 const ABSOLUTE_URL_PATTERN = /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//;
+const CHECKIN_STEP_NAMES = ['personal', 'leader'];
 
 function requireEnv(env, key) {
   const value = env[key];
@@ -29,6 +30,47 @@ function readInt(env, key, defaultValue) {
   return value;
 }
 
+function readCheckinSteps(env) {
+  const raw = env.CHECKIN_STEPS || CHECKIN_STEP_NAMES.join(',');
+  const steps = String(raw)
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  if (steps.length === 0) {
+    throw new Error('CHECKIN_STEPS must include at least one step');
+  }
+
+  for (const stepName of steps) {
+    if (!CHECKIN_STEP_NAMES.includes(stepName)) {
+      throw new Error(`Invalid CHECKIN_STEPS item: ${stepName}`);
+    }
+  }
+
+  return [...new Set(steps)];
+}
+
+function readBrowserChannel(env) {
+  const raw = env.BROWSER_CHANNEL;
+  if (!raw || String(raw).trim() === '') return undefined;
+  return String(raw).trim();
+}
+
+function readLoginInputMode(env) {
+  const raw = env.LOGIN_INPUT_MODE || 'ime';
+  const value = String(raw).trim().toLowerCase();
+  if (!['ime', 'native-ime', 'paste-twice', 'type'].includes(value)) {
+    throw new Error(`Invalid LOGIN_INPUT_MODE: ${raw}`);
+  }
+  return value;
+}
+
+function readBoolean(env, key, defaultValue) {
+  const raw = env[key];
+  if (raw === undefined || String(raw).trim() === '') return defaultValue;
+  return !['false', '0', 'no', 'off'].includes(String(raw).trim().toLowerCase());
+}
+
 function assertPositive(value, key) {
   if (value <= 0) {
     throw new Error(`${key} must be greater than 0`);
@@ -45,6 +87,7 @@ async function readSiteConfig(siteConfigPath) {
     ['login.passwordSelector', site?.login?.passwordSelector],
     ['login.submitSelector', site?.login?.submitSelector],
     ['personal.url', site?.personal?.url],
+    ['personal.alreadyDoneSelector', site?.personal?.alreadyDoneSelector],
     ['leader.url', site?.leader?.url],
     ['leader.alreadyDoneSelector', site?.leader?.alreadyDoneSelector],
   ];
@@ -121,12 +164,17 @@ export async function buildConfig({ env = process.env, cwd = process.cwd() } = {
 
   const site = await readSiteConfig(siteConfigPath);
   applyTargetUrlToSite({ site, targetUrl });
+  const checkinSteps = readCheckinSteps(env);
 
   const maxAttempts = readInt(env, 'MAX_ATTEMPTS', 3);
   const backoffMinMs = readInt(env, 'BACKOFF_MIN_MS', 30_000);
   const backoffMaxMs = readInt(env, 'BACKOFF_MAX_MS', 90_000);
   const browserTimeoutMs = readInt(env, 'BROWSER_TIMEOUT_MS', 20_000);
   const actionBufferMs = readInt(env, 'CHECKIN_ACTION_BUFFER_MS', 1500);
+  const loginTypeDelayMs = readInt(env, 'LOGIN_TYPE_DELAY_MS', 180);
+  const loginFieldSettleMs = readInt(env, 'LOGIN_FIELD_SETTLE_MS', 2000);
+  const loginNameReadySettleMs = readInt(env, 'LOGIN_NAME_READY_SETTLE_MS', 1500);
+  const loginPasteSettleMs = readInt(env, 'LOGIN_PASTE_SETTLE_MS', 1200);
 
   assertPositive(maxAttempts, 'MAX_ATTEMPTS');
   assertPositive(browserTimeoutMs, 'BROWSER_TIMEOUT_MS');
@@ -139,6 +187,8 @@ export async function buildConfig({ env = process.env, cwd = process.cwd() } = {
     username: requireEnv(env, 'CHECKIN_USERNAME'),
     password: requireEnv(env, 'CHECKIN_PASSWORD'),
     timezone,
+    precheckEnabled: readBoolean(env, 'CHECKIN_PRECHECK', true),
+    checkinSteps,
     screenshotDir,
     logPath,
     siteConfigPath,
@@ -150,9 +200,18 @@ export async function buildConfig({ env = process.env, cwd = process.cwd() } = {
     },
     browser: {
       headless: (env.HEADLESS || 'true').toLowerCase() !== 'false',
+      channel: readBrowserChannel(env),
       timeoutMs: browserTimeoutMs,
       slowMoMs: readInt(env, 'BROWSER_SLOW_MO_MS', 0),
       actionBufferMs,
+      loginTypeDelayMs,
+      loginFieldSettleMs,
+      loginNameReadySettleMs,
+      loginPasteSettleMs,
+      loginInputMode: readLoginInputMode(env),
+      loginImeText: (env.LOGIN_IME_TEXT || '').trim(),
+      loginImeCommitKey: (env.LOGIN_IME_COMMIT_KEY || 'SPACE').trim(),
+      loginWindowTitle: (env.LOGIN_WINDOW_TITLE || '学生日常打卡系统').trim(),
     },
   };
 }

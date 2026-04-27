@@ -67,8 +67,11 @@ test('buildConfig should parse required env and site config', async () => {
   assert.equal(config.site.leader.url, 'https://demo.example.com/leader');
   assert.equal(config.site.login.usernameSelector, '#username');
   assert.equal('statePath' in config, false);
+  assert.deepEqual(config.checkinSteps, ['personal', 'leader']);
   assert.equal(config.retry.maxAttempts, 3);
+  assert.equal(config.browser.channel, undefined);
   assert.equal(config.browser.actionBufferMs, 1500);
+  assert.equal(config.browser.loginInputMode, 'ime');
 });
 
 test('buildConfig should fail when required env is missing', async () => {
@@ -142,4 +145,78 @@ test('buildConfig should parse CHECKIN_ACTION_BUFFER_MS override', async () => {
   });
 
   assert.equal(config.browser.actionBufferMs, 2800);
+});
+
+test('buildConfig should parse CHECKIN_STEPS override', async () => {
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'daily-checkin-config-'));
+  const sitePath = await createSiteConfig(tmpDir);
+
+  const config = await buildConfig({
+    env: {
+      TARGET_URL: 'https://demo.example.com',
+      CHECKIN_USERNAME: 'u1',
+      CHECKIN_PASSWORD: 'p1',
+      SITE_CONFIG_PATH: sitePath,
+      CHECKIN_STEPS: 'personal',
+    },
+  });
+
+  assert.deepEqual(config.checkinSteps, ['personal']);
+});
+
+test('buildConfig should reject invalid CHECKIN_STEPS item', async () => {
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'daily-checkin-config-'));
+  const sitePath = await createSiteConfig(tmpDir);
+
+  await assert.rejects(() =>
+    buildConfig({
+      env: {
+        TARGET_URL: 'https://demo.example.com',
+        CHECKIN_USERNAME: 'u1',
+        CHECKIN_PASSWORD: 'p1',
+        SITE_CONFIG_PATH: sitePath,
+        CHECKIN_STEPS: 'student',
+      },
+    }),
+  /Invalid CHECKIN_STEPS item: student/);
+});
+
+test('buildConfig should parse BROWSER_CHANNEL override', async () => {
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'daily-checkin-config-'));
+  const sitePath = await createSiteConfig(tmpDir);
+
+  const config = await buildConfig({
+    env: {
+      TARGET_URL: 'https://demo.example.com',
+      CHECKIN_USERNAME: 'u1',
+      CHECKIN_PASSWORD: 'p1',
+      SITE_CONFIG_PATH: sitePath,
+      BROWSER_CHANNEL: 'msedge',
+    },
+  });
+
+  assert.equal(config.browser.channel, 'msedge');
+});
+
+test('buildConfig should parse LOGIN_INPUT_MODE override', async () => {
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'daily-checkin-config-'));
+  const sitePath = await createSiteConfig(tmpDir);
+
+  const config = await buildConfig({
+    env: {
+      TARGET_URL: 'https://demo.example.com',
+      CHECKIN_USERNAME: 'u1',
+      CHECKIN_PASSWORD: 'p1',
+      SITE_CONFIG_PATH: sitePath,
+      LOGIN_INPUT_MODE: 'native-ime',
+      LOGIN_IME_TEXT: 'panzihao',
+      LOGIN_IME_COMMIT_KEY: 'SPACE',
+      LOGIN_WINDOW_TITLE: 'demo title',
+    },
+  });
+
+  assert.equal(config.browser.loginInputMode, 'native-ime');
+  assert.equal(config.browser.loginImeText, 'panzihao');
+  assert.equal(config.browser.loginImeCommitKey, 'SPACE');
+  assert.equal(config.browser.loginWindowTitle, 'demo title');
 });

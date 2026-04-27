@@ -7,6 +7,7 @@
   },
   "personal": {
     "url": "/group/today",
+    "alreadyDoneSelector": ".col-check .el-tag__content:has-text(\"已打卡\")",
     "submitSequence": [
       { "selector": "role=button[name=个人打卡]" },
       { "selector": ".checkin-btn:has(span:has-text(\"在校\"))", "waitMs": 500 },

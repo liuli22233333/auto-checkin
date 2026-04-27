@@ -6,6 +6,8 @@
   "private": true,
   "scripts": {
     "start": "node src/index.js",
+    "fill-login": "node scripts/fill-login-only.js",
+    "login-only": "node scripts/fill-login-only.js --click-login",
     "test": "node --test"
   },
   "engines": {

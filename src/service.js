@@ -15,34 +15,41 @@ export async function startService({ config, logger }) {
     timezone: config.timezone,
   });
 
-  try {
-    const precheck = await checkCheckinCompleted({
-      config,
-      runId,
-      logger,
-    });
-
-    if (precheck.completed) {
-      await logger.info('precheck_completed', {
-        run_id: runId,
-        leader: precheck.summary.leader,
+  if (config.precheckEnabled) {
+    try {
+      const precheck = await checkCheckinCompleted({
+        config,
+        runId,
+        logger,
       });
 
-      await logger.info('workflow_finished', {
-        run_id: runId,
-        reason: 'precheck_completed',
-      });
+      if (precheck.completed) {
+        await logger.info('precheck_completed', {
+          run_id: runId,
+          ...precheck.summary,
+        });
 
-      return {
-        async stop() {
-          await logger.info('service_stop', {});
-        },
-      };
+        await logger.info('workflow_finished', {
+          run_id: runId,
+          reason: 'precheck_completed',
+        });
+
+        return {
+          async stop() {
+            await logger.info('service_stop', {});
+          },
+        };
+      }
+    } catch (error) {
+      await logger.warn('precheck_failed_continue', {
+        run_id: runId,
+        error,
+      });
     }
-  } catch (error) {
-    await logger.warn('precheck_failed_continue', {
+  } else {
+    await logger.info('precheck_skipped', {
       run_id: runId,
-      error,
+      reason: 'CHECKIN_PRECHECK=false',
     });
   }
 
@@ -56,7 +63,7 @@ export async function startService({ config, logger }) {
     if (result.status === 'success') {
       await logger.info('checkin_success', {
         run_id: runId,
-        leader: result.summary.leader,
+        ...result.summary,
       });
 
       await logger.info('workflow_finished', {

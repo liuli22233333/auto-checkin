@@ -1,0 +1,30 @@
+{
+  "login": {
+    "url": "/login",
+    "usernameSelector": "input.el-input__inner[placeholder=\"请输入学号/工号\"]",
+    "passwordSelector": "input.el-input__inner[placeholder=\"请输入姓名\"], input.el-input__inner[placeholder=\"请输入密码\"]",
+    "submitSelector": "role=button[name=/登\\s*录/]"
+  },
+  "personal": {
+    "url": "/student/home",
+    "alreadyDoneSelector": "text=/今日.*(已打卡|已签到)|打卡成功|签到成功/",
+    "submitSequence": [
+      { "type": "clickExactTextOffset", "text": "不在校", "selector": "text=/^不在校$/", "offsetX": 0, "offsetY": 0, "waitMs": 800 },
+      { "type": "clickExactTextOffset", "text": "不在校", "selector": "text=/^不在校$/", "offsetX": -180, "offsetY": 0, "waitForSelector": "role=button[name=\"提交打卡\"]", "waitMs": 800 },
+      { "selector": "role=button[name=\"提交打卡\"]", "waitForSelector": "text=向右拖动滑块", "waitMs": 800 },
+      { "selector": "text=向右拖动滑块", "type": "dragTrackByText", "text": "向右拖动滑块", "distance": 430, "steps": 45, "waitMs": 1200 }
+    ],
+    "successSelector": "text=/打卡成功|签到成功|提交成功/"
+  },
+  "leader": {
+    "url": "/group/today",
+    "alreadyDoneSelector": "text=今日打卡已提交至班委",
+    "submitSelector": "role=button[name=/提交(本组打卡结果|至班委|本组结果)/]",
+    "confirmSelector": "role=button[name=确认提交]",
+    "successSelector": "text=提交成功"
+  },
+  "auth": {
+    "loggedInSelector": "text=/今日打卡|潘子豪|退出/",
+    "loginFailedPattern": "信息有误|账号不存在|invalid|incorrect"
+  }
+}

@@ -69,7 +69,7 @@ test('buildConfig should parse required env and site config', async () => {
   assert.equal('statePath' in config, false);
   assert.deepEqual(config.checkinSteps, ['personal', 'leader']);
   assert.equal(config.retry.maxAttempts, 3);
-  assert.equal(config.browser.channel, undefined);
+  assert.equal(config.browser.channel, 'msedge');
   assert.equal(config.browser.actionBufferMs, 1500);
   assert.equal(config.browser.loginInputMode, 'ime');
 });

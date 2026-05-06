@@ -200,7 +200,7 @@ export async function buildConfig({ env = process.env, cwd = process.cwd() } = {
     },
     browser: {
       headless: (env.HEADLESS || 'true').toLowerCase() !== 'false',
-      channel: readBrowserChannel(env),
+      channel: readBrowserChannel(env) || 'msedge',
       timeoutMs: browserTimeoutMs,
       slowMoMs: readInt(env, 'BROWSER_SLOW_MO_MS', 0),
       actionBufferMs,

@@ -28,6 +28,32 @@ npx playwright install chromium
 
 ## 快速开始
 
+### Windows 一键运行
+
+首次使用：
+
+1. 双击 `run-auto-checkin.cmd`。
+2. 如果还没有 `.env`，脚本会自动从 `.env.example` 创建一份，并直接提示你输入 `TARGET_URL`、`CHECKIN_USERNAME`、`CHECKIN_PASSWORD`。
+3. 填完后脚本会继续自动安装依赖、检查 Chromium，并执行签到。
+
+脚本会自动完成这些检查：
+
+- 检查 Node.js 是否为 20 或更高版本。
+- 检查 `.env` 是否存在，必要时自动初始化并补齐必填配置。
+- 如果缺少 `node_modules`，自动执行 `npm install`。
+- 如果缺少 Playwright Chromium，自动执行 `npx playwright install chromium`。
+- 最后执行自动签到，并把日志写入 `runtime/app.log`。
+
+命令行也可以一键运行：
+
+```powershell
+npm.cmd run auto
+```
+
+如果你的 PowerShell 没有限制 `npm.ps1`，也可以直接用 `npm run auto`。
+
+### 手动运行
+
 1. 复制环境变量模板：
 
 ```bash
@@ -58,6 +84,8 @@ npm run start
 ## 常用命令
 
 ```bash
+npm run auto         # Windows 一键检查依赖并执行自动签到
+npm run setup        # 安装 npm 依赖和 Playwright Chromium
 npm run start        # 执行完整签到流程
 npm run fill-login   # 仅填充登录信息，便于调试输入
 npm run login-only   # 填充登录信息并点击登录
@@ -90,7 +118,7 @@ npm test             # 运行单元测试
 | `BACKOFF_MIN_MS` | `30000` | 重试最小等待时间 |
 | `BACKOFF_MAX_MS` | `90000` | 重试最大等待时间 |
 | `HEADLESS` | `true` | 是否使用无头浏览器 |
-| `BROWSER_CHANNEL` | 空 | 指定浏览器通道，例如 `msedge` |
+| `BROWSER_CHANNEL` | `msedge` | 指定浏览器通道，当前默认使用 Edge |
 | `BROWSER_TIMEOUT_MS` | `20000` | 页面操作超时时间 |
 | `BROWSER_SLOW_MO_MS` | `0` | 浏览器操作慢放时间，调试时可加大 |
 | `CHECKIN_ACTION_BUFFER_MS` | `1500` | 每个提交动作前后的缓冲等待 |

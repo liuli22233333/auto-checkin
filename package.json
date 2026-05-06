@@ -5,6 +5,8 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "auto": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/one-click-run.ps1",
+    "setup": "npm install && npx playwright install chromium",
     "start": "node src/index.js",
     "fill-login": "node scripts/fill-login-only.js",
     "login-only": "node scripts/fill-login-only.js --click-login",
